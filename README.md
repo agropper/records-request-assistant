@@ -8,46 +8,32 @@ Patients have the right to their medical records, but every portal buries the re
 
 ## Architecture
 
-The assistant separates **intelligence** from **browser control**:
+The assistant separates **intelligence** from **browser control** with no local component:
 
 - **MAIA server + Claude API** — orchestrates the workflow, decides what to read/click/fill, manages the patient profile, communicates with the patient
-- **mcp-chrome** (free, open-source Chrome extension) — provides browser automation tools (DOM reading, clicking, form filling, screenshots) via MCP over HTTP on localhost
-- **Local filesystem** — patient folder with records and `maia-profile.json`
-
-This split means **patients don't need a paid Claude subscription**. MAIA's server handles the AI costs; the patient only needs Chrome with the free mcp-chrome extension installed.
-
-### Why not Claude in Chrome?
-
-Claude in Chrome bundles intelligence + browser control in one extension but requires a paid Claude subscription ($20+/month). That's a non-starter for most patients. By using mcp-chrome for browser actions and calling Claude API from the server, we get equivalent capabilities with no cost to the patient.
-
-### How it works
+- **MAIA Chrome extension** (free, open-source) — thin agent that reads DOM, clicks elements, and fills forms as directed by the server
+- **Patient's local folder** — records and `maia-profile.json` for reuse across requests
 
 ```
-Patient's Chrome                     MAIA Server
-┌─────────────────┐                ┌──────────────────┐
-│ Patient portal   │                │ Claude API       │
-│ (authenticated)  │                │ (intelligence)   │
-│                  │   MCP/HTTP     │                  │
-│ mcp-chrome ext   │◄──────────────►│ MCP client       │
-│ (browser tools)  │  localhost     │ (orchestration)  │
-└─────────────────┘                └──────────────────┘
-                                          ▲
-                                          │ chat
-                                          ▼
-                                   ┌──────────────────┐
-                                   │ Patient UI       │
-                                   │ (MAIA chat)      │
-                                   └──────────────────┘
+Patient's Chrome                       MAIA Server (cloud)
+┌─────────────────────┐               ┌──────────────────────┐
+│  Patient portal     │               │  Claude API          │
+│  (authenticated)    │               │  (intelligence)      │
+│                     │   HTTPS       │                      │
+│  MAIA extension     │◄────────────►│  Orchestration       │
+│  (browser actions)  │               │                      │
+└─────────────────────┘               │  MAIA chat UI        │
+                                      └──────────────────────┘
 ```
 
-The patient sees a chat interface. The server reads/drives the browser behind the scenes, always prompting the patient before taking visible actions.
+The extension communicates directly with MAIA's server over HTTPS — no local bridge, no MCP protocol, no Node.js. See [architecture.md](docs/architecture.md) for the full rationale and alternatives considered.
 
 ## Prerequisites
 
 1. **Google Chrome** (version 122 or later)
-2. **mcp-chrome extension** (free) — see [Setup Guide](docs/setup-guide.md)
+2. **MAIA Chrome extension** (free, one-click install from Chrome Web Store) — see [Setup Guide](docs/setup-guide.md)
 
-No paid subscriptions, no accounts to create.
+No paid subscriptions, no local software to install, no technical setup.
 
 ## Phases
 

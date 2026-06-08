@@ -3,21 +3,20 @@
 ## Prerequisites
 
 1. **Google Chrome** (version 122 or later)
-2. **mcp-chrome extension** (free, open source)
+2. **MAIA Chrome extension** (free, from Chrome Web Store)
 
-No paid subscriptions or accounts required.
+No paid subscriptions, no local software, no accounts beyond MAIA.
 
 ## Installation
 
-### Step 1: Install mcp-chrome
+### Step 1: Install the MAIA extension
 
 1. Open Chrome
-2. Go to the Chrome Web Store
-3. Search for "mcp-chrome"
-4. Click "Add to Chrome" → "Add extension"
-5. The mcp-chrome icon appears in the toolbar
+2. Click the install link provided by MAIA (or search "MAIA" in the Chrome Web Store)
+3. Click "Add to Chrome" → "Add extension"
+4. Done — the MAIA icon appears in the toolbar
 
-The extension starts an MCP server on `http://127.0.0.1:12306/mcp` that the assistant connects to.
+No sign-in needed for the extension. No configuration. No local servers or background processes.
 
 ### Step 2: Log in to your patient portal
 
@@ -26,51 +25,55 @@ The extension starts an MCP server on `http://127.0.0.1:12306/mcp` that the assi
 3. Complete any 2FA or security questions
 4. Stay on the portal's home page
 
-The assistant will never see or touch your password. You handle all authentication yourself.
+MAIA will never see or touch your password. You handle all authentication yourself.
 
 ### Step 3: Start the assistant
 
 1. Open MAIA
 2. Ask for help requesting your records
-3. The assistant connects to your Chrome tab through mcp-chrome and begins guiding you
+3. MAIA connects to the extension in your Chrome tab and begins guiding you
 
-## The Onboarding Challenge
+## What the extension does
 
-The biggest barrier for non-technical users is understanding what a Chrome extension is. The current flow requires:
+The MAIA extension is a thin helper that lets MAIA's server read and interact with the patient portal page you have open. It can:
 
-1. Knowing what a Chrome extension is
-2. Finding the Chrome Web Store
-3. Searching for "mcp-chrome"
-4. Clicking "Add to Chrome"
+- Read text on the page (to find the right form)
+- Click buttons and menu items (to navigate)
+- Fill in form fields (dates, checkboxes — always with your confirmation first)
 
-### What we're doing about it
+The extension does NOT:
 
-- **Demo video:** A step-by-step walkthrough showing the exact clicks needed, from extension install through completing a records request. See [video-script.md](video-script.md).
-- **Direct install link:** Provide a one-click link that opens the Chrome Web Store directly on the mcp-chrome extension page, skipping the search step.
-- **Detection and guidance:** When the assistant starts, it checks if mcp-chrome is reachable. If not, it displays specific installation instructions rather than a generic error.
-- **MAIA integration (future):** The extension install becomes one step in MAIA's existing onboarding flow, where the patient is already going through setup.
+- See or store your passwords
+- Access pages you haven't directed it to
+- Send data to anyone other than MAIA's server
+- Run any background processes on your computer
+
+## Privacy
+
+- The extension only activates on the tab you point it to
+- Portal page content is sent to MAIA's server over encrypted HTTPS
+- MAIA already handles your health information — this uses the same trust relationship
+- No data is stored in the extension itself
 
 ## Troubleshooting
 
-### "Assistant can't connect to your browser"
+### "MAIA can't connect to your browser"
 
-The mcp-chrome extension may not be running. Check:
-- Is the mcp-chrome icon visible in Chrome's toolbar?
-- Try clicking the icon to check its status
-- Restart Chrome and try again
+Check:
+- Is the MAIA extension icon visible in Chrome's toolbar?
+- Is Chrome open and on your portal page?
+- Try refreshing the portal page
 
-### Portal page seems stuck or unresponsive
+### Portal page seems stuck
 
-Medical portals (especially MyChart/Epic) are heavy web applications. The assistant handles this automatically, but if you notice slowness:
-- Wait a few seconds for the page to fully load
-- Make sure you're on the portal's home page, not a login screen
+Medical portals (especially MyChart/Epic) are complex web applications. MAIA handles this automatically, but if you notice slowness, wait a few seconds for the page to fully load.
 
 ### Extension disconnects
 
-If Chrome restarts, sleeps, or the extension updates, the connection may drop. The assistant will detect this and prompt you to refresh or reconnect.
+If Chrome restarts or the extension updates, the connection may drop. MAIA will detect this and prompt you to refresh.
 
-## Technical Notes
+## Technical Details
 
-- mcp-chrome communicates via HTTP on localhost only (`127.0.0.1:12306`) — your portal data is never sent to external servers through the extension
-- The extension can read page content but never captures or stores your passwords
-- Medical portal SPAs have idle-timeout issues — see [Phase 1 Navigation](phase-1-navigation.md) for how the assistant handles this
+The extension communicates with MAIA's server over HTTPS — the same standard web encryption used by every banking and medical website. There is no local server, no MCP bridge, and no Node.js involved. The extension is published on the Chrome Web Store and is open source for security audit.
+
+For the full architecture rationale, see [architecture.md](architecture.md).
