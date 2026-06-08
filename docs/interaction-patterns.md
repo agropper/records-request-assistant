@@ -65,20 +65,20 @@ Agent: "Your request has been submitted. Confirmation number: [X]."
 
 ### Opening Native `<select>` Dropdowns
 
-Native HTML `<select>` elements cannot be opened programmatically via JavaScript (`mousedown` event dispatch doesn't work reliably). The agent must click the element by coordinates using the Chrome automation tools.
+Native HTML `<select>` elements cannot be opened programmatically via JavaScript (`mousedown` event dispatch doesn't work reliably). The agent must click the element by coordinates using mcp-chrome's click tool.
 
 Flow:
-1. Use `javascript_tool` to get the element's bounding rectangle
-2. Use `left_click` at the element's center coordinates
+1. Use JavaScript execution to get the element's bounding rectangle
+2. Use click-by-coordinates at the element's center
 3. The native dropdown opens and the patient can click their choice
 
 ### Idle-Timeout Workaround
 
-Medical portal SPAs (MyChart/Epic, etc.) have persistent background scripts that prevent Chrome's `document_idle` signal. When `screenshot`, `find`, or `read_page` fail with idle-timeout errors:
+Medical portal SPAs (MyChart/Epic, etc.) have persistent background scripts that may prevent idle-dependent tools from working. When high-level tools fail:
 
-1. Use `javascript_tool` for reading page state (always works)
-2. Use `left_click` by coordinates for UI interactions
-3. Use `wait` between actions to allow page transitions
+1. Use JavaScript execution for reading page state (always works)
+2. Use click-by-coordinates for UI interactions
+3. Allow time between actions for page transitions
 
 See [Phase 1 Navigation](phase-1-navigation.md) for details.
 

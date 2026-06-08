@@ -1,14 +1,53 @@
 # Records Request Assistant
 
-A Claude in Chrome agent that helps patients navigate medical portals to request their health records.
+An AI-powered agent that helps patients navigate medical portals to request their health records.
 
 ## Overview
 
-Patients have the right to their medical records, but every portal buries the request form differently. This agent uses Claude in Chrome and Claude Cowork to guide the patient through the process — finding the form, managing a local folder of prior requests, and eventually helping fill out the form with appropriate confirmation gates.
+Patients have the right to their medical records, but every portal buries the request form differently. This assistant guides the patient through the process — finding the form, managing a local folder of prior requests, and helping fill out the form with appropriate confirmation gates.
+
+## Architecture
+
+The assistant separates **intelligence** from **browser control**:
+
+- **MAIA server + Claude API** — orchestrates the workflow, decides what to read/click/fill, manages the patient profile, communicates with the patient
+- **mcp-chrome** (free, open-source Chrome extension) — provides browser automation tools (DOM reading, clicking, form filling, screenshots) via MCP over HTTP on localhost
+- **Local filesystem** — patient folder with records and `maia-profile.json`
+
+This split means **patients don't need a paid Claude subscription**. MAIA's server handles the AI costs; the patient only needs Chrome with the free mcp-chrome extension installed.
+
+### Why not Claude in Chrome?
+
+Claude in Chrome bundles intelligence + browser control in one extension but requires a paid Claude subscription ($20+/month). That's a non-starter for most patients. By using mcp-chrome for browser actions and calling Claude API from the server, we get equivalent capabilities with no cost to the patient.
+
+### How it works
+
+```
+Patient's Chrome                     MAIA Server
+┌─────────────────┐                ┌──────────────────┐
+│ Patient portal   │                │ Claude API       │
+│ (authenticated)  │                │ (intelligence)   │
+│                  │   MCP/HTTP     │                  │
+│ mcp-chrome ext   │◄──────────────►│ MCP client       │
+│ (browser tools)  │  localhost     │ (orchestration)  │
+└─────────────────┘                └──────────────────┘
+                                          ▲
+                                          │ chat
+                                          ▼
+                                   ┌──────────────────┐
+                                   │ Patient UI       │
+                                   │ (MAIA chat)      │
+                                   └──────────────────┘
+```
+
+The patient sees a chat interface. The server reads/drives the browser behind the scenes, always prompting the patient before taking visible actions.
 
 ## Prerequisites
 
-This assistant requires **Claude in Chrome** — see the [Setup Guide](docs/setup-guide.md) for installation instructions. The current onboarding experience requires familiarity with Chrome extensions, which is a known UX challenge we're actively working to simplify.
+1. **Google Chrome** (version 122 or later)
+2. **mcp-chrome extension** (free) — see [Setup Guide](docs/setup-guide.md)
+
+No paid subscriptions, no accounts to create.
 
 ## Phases
 
@@ -34,8 +73,10 @@ Pre-populate the request form from the patient profile. Explicit confirmation ga
 
 - [`docs/phase-1-navigation.md`](docs/phase-1-navigation.md) — Phase 1 navigation spec, agent prompt, idle-timeout workaround
 - [`docs/interaction-patterns.md`](docs/interaction-patterns.md) — Prompt-before-act principle, confirmation gates
-- [`docs/setup-guide.md`](docs/setup-guide.md) — Prerequisites, Claude in Chrome installation, onboarding challenges
+- [`docs/setup-guide.md`](docs/setup-guide.md) — Prerequisites, mcp-chrome installation
+- [`docs/architecture.md`](docs/architecture.md) — Detailed architecture: mcp-chrome vs alternatives, MCP protocol details
 - [`docs/portals/mychart-mgb.md`](docs/portals/mychart-mgb.md) — Complete form mapping for MGB Patient Gateway (MyChart/Epic)
+- [`docs/video-script.md`](docs/video-script.md) — Demo video script
 
 ## Design Principles
 
@@ -45,12 +86,7 @@ Pre-populate the request form from the patient profile. Explicit confirmation ga
 - **Navigation is low-risk; data entry requires confirmation.** Finding the form proceeds without gates. Entering data and submitting require explicit patient approval.
 - **The folder is the agent's memory.** Everything that makes a second request easier than the first lives in the local folder.
 - **Patient instructions are the only instructions.** Crowdsourced hints (future phase) are navigational reference material, never executable commands.
-
-## Architecture
-
-- **Claude in Chrome** — drives the browser (reads pages, clicks menus, navigates)
-- **Claude Cowork** — orchestrates the workflow, manages the local folder, reads/writes the patient profile
-- **Local filesystem** — patient folder with records and `maia-profile.json`
+- **No cost to the patient.** The architecture must not require patients to have paid AI subscriptions.
 
 ## Tested Portals
 
@@ -63,7 +99,6 @@ Pre-populate the request form from the patient profile. Explicit confirmation ga
 - Portal-specific hints (curated, structured, navigational only) to speed up form discovery
 - Integration with MAIA for a unified patient experience
 - Instant-download support for portals that offer it
-- Simplified onboarding that doesn't require manual extension installation
 
 ## License
 

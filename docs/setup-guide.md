@@ -3,66 +3,74 @@
 ## Prerequisites
 
 1. **Google Chrome** (version 122 or later)
-2. **Claude account** (claude.ai)
-3. **Claude in Chrome extension**
+2. **mcp-chrome extension** (free, open source)
 
-## The Onboarding Problem
+No paid subscriptions or accounts required.
 
-The biggest barrier for naive users is installing Claude in Chrome. The current flow requires:
+## Installation
+
+### Step 1: Install mcp-chrome
+
+1. Open Chrome
+2. Go to the Chrome Web Store
+3. Search for "mcp-chrome"
+4. Click "Add to Chrome" → "Add extension"
+5. The mcp-chrome icon appears in the toolbar
+
+The extension starts an MCP server on `http://127.0.0.1:12306/mcp` that the assistant connects to.
+
+### Step 2: Log in to your patient portal
+
+1. Navigate to your patient portal (e.g., Patient Gateway, MyChart)
+2. Log in with your credentials as you normally would
+3. Complete any 2FA or security questions
+4. Stay on the portal's home page
+
+The assistant will never see or touch your password. You handle all authentication yourself.
+
+### Step 3: Start the assistant
+
+1. Open MAIA
+2. Ask for help requesting your records
+3. The assistant connects to your Chrome tab through mcp-chrome and begins guiding you
+
+## The Onboarding Challenge
+
+The biggest barrier for non-technical users is understanding what a Chrome extension is. The current flow requires:
 
 1. Knowing what a Chrome extension is
 2. Finding the Chrome Web Store
-3. Searching for "Claude"
+3. Searching for "mcp-chrome"
 4. Clicking "Add to Chrome"
-5. Signing in to the extension
-6. Understanding what the extension icon means and how to interact with it
 
-Most patients requesting medical records are not power users. "Install a Chrome extension" is a significant friction point.
+### What we're doing about it
 
-## Current Installation Steps
+- **Demo video:** A step-by-step walkthrough showing the exact clicks needed, from extension install through completing a records request. See [video-script.md](video-script.md).
+- **Direct install link:** Provide a one-click link that opens the Chrome Web Store directly on the mcp-chrome extension page, skipping the search step.
+- **Detection and guidance:** When the assistant starts, it checks if mcp-chrome is reachable. If not, it displays specific installation instructions rather than a generic error.
+- **MAIA integration (future):** The extension install becomes one step in MAIA's existing onboarding flow, where the patient is already going through setup.
 
-### Step 1: Install Claude in Chrome
+## Troubleshooting
 
-1. Open Chrome
-2. Go to the Chrome Web Store: `chrome.google.com/webstore`
-3. Search for "Claude" by Anthropic
-4. Click "Add to Chrome" → "Add extension"
-5. The Claude icon (a sparkle) appears in the toolbar
+### "Assistant can't connect to your browser"
 
-### Step 2: Sign in
+The mcp-chrome extension may not be running. Check:
+- Is the mcp-chrome icon visible in Chrome's toolbar?
+- Try clicking the icon to check its status
+- Restart Chrome and try again
 
-1. Click the Claude icon in the Chrome toolbar
-2. Sign in with your Claude account
-3. The icon should become active (not grayed out)
+### Portal page seems stuck or unresponsive
 
-### Step 3: Connect to Cowork
+Medical portals (especially MyChart/Epic) are heavy web applications. The assistant handles this automatically, but if you notice slowness:
+- Wait a few seconds for the page to fully load
+- Make sure you're on the portal's home page, not a login screen
 
-1. Open Claude Code or Claude Desktop
-2. The Chrome extension should appear as a connected tool
-3. Verify by checking available MCP tools
+### Extension disconnects
 
-## Ideas to Simplify Onboarding
-
-### Near-term (work within current constraints)
-
-- **Direct install link:** Provide a one-click link that opens the Chrome Web Store directly on the Claude extension page, skipping the search step.
-- **Visual step-by-step guide:** A short animated GIF or video showing the exact clicks needed. Embedded in the assistant's first interaction.
-- **Detection and guidance:** When the assistant starts, check if Claude in Chrome is connected. If not, display specific instructions with screenshots rather than a generic error.
-
-### Medium-term (requires Anthropic platform changes)
-
-- **Auto-install prompt:** If Claude detects Chrome but no extension, prompt the user with a one-click install dialog (similar to how sites prompt "Install our app").
-- **Companion app:** A lightweight installer that sets up Chrome + extension + Claude account in one flow.
-- **Progressive Web App (PWA):** Avoid the extension entirely by running as a PWA with the necessary permissions.
-
-### Long-term (architectural alternatives)
-
-- **No-extension approach:** Use a proxy or API-based approach that doesn't require a browser extension at all. The patient would authenticate with their portal through a controlled browser session.
-- **Native app:** A dedicated application that embeds a browser and the assistant, eliminating the extension requirement entirely.
-- **MAIA integration:** Once integrated with MAIA, the setup could happen during MAIA onboarding (which the patient is already doing for their health records). MAIA's existing welcome/setup flow could guide the extension installation as one step in a larger setup process.
+If Chrome restarts, sleeps, or the extension updates, the connection may drop. The assistant will detect this and prompt you to refresh or reconnect.
 
 ## Technical Notes
 
-- Claude in Chrome requires an active connection to work. If the extension disconnects (browser restart, sleep, etc.), the assistant should detect this and guide reconnection.
-- The extension creates a "tab group" for the assistant's tabs. Closing all tabs in the group removes the group — the assistant handles this gracefully.
-- Medical portal SPAs (MyChart/Epic) have idle-timeout issues with the extension. See [Phase 1 Navigation](phase-1-navigation.md) for the workaround.
+- mcp-chrome communicates via HTTP on localhost only (`127.0.0.1:12306`) — your portal data is never sent to external servers through the extension
+- The extension can read page content but never captures or stores your passwords
+- Medical portal SPAs have idle-timeout issues — see [Phase 1 Navigation](phase-1-navigation.md) for how the assistant handles this

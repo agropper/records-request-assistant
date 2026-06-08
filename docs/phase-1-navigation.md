@@ -8,11 +8,11 @@ Starting from a patient's already-authenticated medical portal, locate the forma
 
 ### The idle-timeout problem
 
-Medical portals like MyChart/Epic are heavy SPAs with persistent background activity (WebSocket connections, session keepalive polling, analytics). This prevents Chrome's `document_idle` signal from ever firing, which blocks Claude in Chrome's `screenshot`, `find`, and `read_page` tools — they all wait for idle and time out after 45 seconds.
+Medical portals like MyChart/Epic are heavy SPAs with persistent background activity (WebSocket connections, session keepalive polling, analytics). During prototyping with Claude in Chrome, this prevented the `document_idle` signal from ever firing, blocking screenshot, find, and read_page tools (45-second timeout).
 
-**The page IS loaded** (`document.readyState === "complete"`, `window.Epic` exists), but the extension's idle check never passes. This will likely affect most major portal platforms.
+**The page IS loaded** (`document.readyState === "complete"`, `window.Epic` exists), but idle checks never pass. This will likely affect most major portal platforms.
 
-**Workaround:** `javascript_tool` bypasses the idle check and works reliably. However, JavaScript DOM scraping must not replace visual navigation — see below.
+**Workaround:** JavaScript execution via the browser extension bypasses idle checks and works reliably. The production architecture uses mcp-chrome (see [architecture.md](architecture.md)), which may handle this differently — needs testing. Regardless, JavaScript DOM interaction must not replace visual navigation — see below.
 
 ### Navigate visually, not programmatically
 
@@ -22,9 +22,9 @@ The assistant's job is to **show the patient the path**, not just find the desti
 
 **Right approach:** Click the hamburger menu → read the visible menu → find "Request Records" under "My Record" → click it → report the path and what the form looks like.
 
-If screenshots are blocked by the idle-timeout issue, the agent should:
-1. Use `javascript_tool` to identify clickable navigation elements
-2. Use `javascript_tool` to click them (simulating the visual navigation)
+If high-level tools (screenshot, semantic find) are blocked by idle-timeout, the agent should fall back to:
+1. Use JavaScript execution to identify clickable navigation elements
+2. Use click-by-coordinates or JS click to interact (simulating visual navigation)
 3. Reconstruct and **report the menu path** to the patient (e.g., "Menu → My Record → Request Records")
 4. Read the resulting page to confirm the form
 
@@ -53,7 +53,7 @@ Read the current page and verify it's a logged-in home page, not a login or 2FA 
 
 ### 2. Handle the idle-timeout problem
 
-If screenshot/find/read_page tools fail with an idle-timeout error, switch to `javascript_tool` for page interaction. This is expected on MyChart/Epic and likely other portal SPAs. Log the workaround so we can track which portals require it.
+If high-level browser tools fail with an idle-timeout error, fall back to JavaScript execution for page interaction. This is expected on MyChart/Epic and likely other portal SPAs. Log the workaround so we can track which portals require it.
 
 ### 3. Identify the platform
 
@@ -113,11 +113,12 @@ You are operating on a patient's already-logged-in medical portal tab.
 GOAL (Phase 1 only): locate the formal medical-records REQUEST form. Do not fill
 or submit anything.
 
-IMPORTANT: Medical portals are heavy SPAs. The screenshot, find, and read_page
-tools may fail with idle-timeout errors. If this happens, use javascript_tool to
-interact with the page. But even when using JS, navigate VISUALLY — click menus,
-read what opens, follow the path a user would take. Do NOT just scrape all links
-from the DOM. Report the menu path you followed so the patient learns the route.
+IMPORTANT: Medical portals are heavy SPAs. High-level browser tools (screenshot,
+semantic find) may fail with idle-timeout errors. If this happens, fall back to
+JavaScript execution via mcp-chrome. But even when using JS, navigate VISUALLY —
+click menus, read what opens, follow the path a user would take. Do NOT just
+scrape all links from the DOM. Report the menu path you followed so the patient
+learns the route.
 
 STEPS
 1. Read the current page. If it's a login/2FA/CAPTCHA screen, stop and ask the
